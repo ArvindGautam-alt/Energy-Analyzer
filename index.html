@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Energy Analyzer</title>
+
+<style>
+body {
+margin: 0;
+font-family: Arial;
+background: #eef2f7;
+}
+
+/* HEADER */
+header {
+background: linear-gradient(90deg,#1e293b,#334155);
+color: white;
+padding: 15px;
+display: flex;
+justify-content: space-between;
+border-bottom-left-radius: 20px;
+border-bottom-right-radius: 20px;
+}
+
+nav a {
+color: white;
+margin: 0 15px;
+text-decoration: none;
+font-weight: bold;
+}
+
+nav a:hover {
+text-decoration: underline;
+}
+
+/* SECTIONS */
+.section {
+display: none;
+padding: 30px;
+text-align: center;
+animation: fade 0.5s;
+}
+
+.active {
+display: block;
+}
+
+@keyframes fade {
+from {opacity: 0;}
+to {opacity: 1;}
+}
+
+/* CARDS */
+.card {
+background: white;
+padding: 20px;
+margin: 10px;
+border-radius: 20px;
+display: inline-block;
+width: 250px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+transition: 0.3s;
+}
+
+.card:hover {
+transform: scale(1.05);
+}
+
+/* BUTTONS */
+button {
+padding: 10px 20px;
+border-radius: 20px;
+border: none;
+background: #22c55e;
+color: white;
+cursor: pointer;
+margin: 5px;
+}
+
+button:hover {
+background: #16a34a;
+}
+
+/* INPUT */
+input {
+padding: 10px;
+border-radius: 20px;
+border: 1px solid #ccc;
+}
+
+/* EXTRA TEXT */
+.stats {
+margin-top: 15px;
+font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>⚡ Energy Analyzer</h2>
+<nav>
+<a href="#" onclick="showPage('home')">Home</a>
+<a href="#" onclick="showPage('live')">Live</a>
+<a href="#" onclick="showPage('graph')">Graph</a>
+<a href="#" onclick="showPage('efficiency')">Efficiency</a>
+</nav>
+</header>
+
+<!-- HOME -->
+<div id="home" class="section active">
+<h1>Welcome</h1>
+<p>Energy Consumption Analysis System</p>
+<p>Track, Analyze & Save Energy ⚡</p>
+</div>
+
+<!-- LIVE TRACKING -->
+<div id="live" class="section">
+<h2>Live Tracking ⚡</h2>
+<h3>Current Usage: <span id="liveValue">0</span> kWh</h3>
+
+<button onclick="generateLive()">Generate</button>
+<button onclick="startLive()">Auto Start</button>
+<button onclick="stopLive()">Stop</button>
+</div>
+
+<!-- GRAPH -->
+<div id="graph" class="section">
+<h2>Energy Graph 📊</h2>
+
+<input type="number" id="energyInput" placeholder="Enter units">
+<button onclick="addData()">Add</button>
+<button onclick="resetData()">Reset</button>
+
+<canvas id="chart"></canvas>
+
+<div class="stats">
+<p>Total: <span id="total">0</span> kWh</p>
+<p id="stats"></p>
+</div>
+</div>
+
+<!-- EFFICIENCY -->
+<div id="efficiency" class="section">
+<h2>Energy Efficiency Tips 💡</h2>
+
+<div class="card">Turn off unused appliances</div>
+<div class="card">Use LED bulbs</div>
+<div class="card">Use solar energy</div>
+
+<br><br>
+<button onclick="getTip()">Get Smart Tip</button>
+<p id="tip"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// NAVIGATION
+function showPage(page) {
+document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+document.getElementById(page).classList.add("active");
+}
+
+// DATA STORAGE
+let data = JSON.parse(localStorage.getItem("energyData")) || [];
+let total = 0;
+
+// CHART
+let chart = new Chart(document.getElementById("chart"), {
+type: 'line',
+data: {
+labels: [],
+datasets: [{
+label: 'Energy Usage',
+data: [],
+borderColor: '#22c55e',
+tension: 0.4
+}]
+}
+});
+
+// LOAD DATA
+data.forEach((val, i) => {
+chart.data.labels.push("Entry " + (i+1));
+chart.data.datasets[0].data.push(val);
+total += val;
+});
+
+document.getElementById("total").innerText = total;
+chart.update();
+
+// ADD DATA
+function addData() {
+let val = document.getElementById("energyInput").value;
+
+if (!val) return alert("Enter value");
+
+val = Number(val);
+
+// ALERT
+if (val > 80) alert("⚠️ High Energy Usage!");
+
+data.push(val);
+total += val;
+
+localStorage.setItem("energyData", JSON.stringify(data));
+
+chart.data.labels.push("Entry " + data.length);
+chart.data.datasets[0].data.push(val);
+chart.update();
+
+document.getElementById("total").innerText = total;
+
+updateStats();
+
+document.getElementById("energyInput").value = "";
+}
+
+// RESET
+function resetData() {
+localStorage.removeItem("energyData");
+location.reload();
+}
+
+// STATS
+function updateStats() {
+if (data.length === 0) return;
+
+let max = Math.max(...data);
+let min = Math.min(...data);
+let avg = (data.reduce((a,b)=>a+b,0)/data.length).toFixed(2);
+
+document.getElementById("stats").innerText =
+`Max: ${max} | Min: ${min} | Avg: ${avg}`;
+}
+
+// LIVE TRACKING
+let liveInterval;
+
+function generateLive() {
+let value = Math.floor(Math.random() * 100);
+document.getElementById("liveValue").innerText = value;
+}
+
+function startLive() {
+liveInterval = setInterval(() => {
+let val = Math.floor(Math.random() * 50) + 10;
+document.getElementById("liveValue").innerText = val;
+}, 2000);
+}
+
+function stopLive() {
+clearInterval(liveInterval);
+}
+
+// TIPS
+function getTip() {
+let tips = [
+"Switch off lights when not needed",
+"Use energy efficient appliances",
+"Unplug chargers",
+"Use natural light in daytime",
+"Use inverter AC for saving energy",
+"We conserve energy to save our planet 🌍"
+];
+
+let randomTip = tips[Math.floor(Math.random() * tips.length)];
+document.getElementById("tip").innerText = randomTip;
+}
+
+// INIT STATS
+updateStats();
+</script>
+
+</body>
+</html>
